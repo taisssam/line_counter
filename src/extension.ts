@@ -2,19 +2,16 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 
-function countLinesInFile(filePath: string, includeEmptyLines: boolean): number {
+function countLinesInFile(filePath: string): number {
     const content = fs.readFileSync(filePath, 'utf-8');
     const lines = content.split('\n');
 
-    if (!includeEmptyLines) {
-        const nonEmptyLines = lines.filter(line => line.trim() !== '');
-        return nonEmptyLines.length;
-    }
+    const nonEmptyLines = lines.filter(line => line.trim() !== '');
 
-    return lines.length;
+    return nonEmptyLines.length;
 }
 
-function countLinesInDirectory(directoryPath: string, fileExtension: string | null, includeEmptyLines: boolean): number {
+function countLinesInDirectory(directoryPath: string, fileExtension: string | null): number {
     let totalLines = 0;
 
     const files = fs.readdirSync(directoryPath);
@@ -24,8 +21,9 @@ function countLinesInDirectory(directoryPath: string, fileExtension: string | nu
         const stats = fs.statSync(filePath);
 
         if (stats.isFile() && (fileExtension === null || path.extname(file) === fileExtension)) {
+            totalLines += countLinesInFile(filePath);
         } else if (stats.isDirectory()) {
-            totalLines += countLinesInDirectory(filePath, fileExtension, includeEmptyLines);
+            totalLines += countLinesInDirectory(filePath, fileExtension);
         }
     });
 
@@ -45,31 +43,20 @@ export function activate(context: vscode.ExtensionContext) {
                         return;
                     }
 
-                    vscode.window.showQuickPick(['Include Empty Lines', 'Exclude Empty Lines'], { placeHolder: 'Include or exclude empty lines?' })
-                        .then(emptyLinesSelection => {
-                            if (emptyLinesSelection === undefined) {
-                                return;
-                            }
-
-                            const includeEmptyLines = emptyLinesSelection === 'Include Empty Lines';
-
-                            if (selection === 'Specific Extension') {
-                                vscode.window.showInputBox({ prompt: 'Enter file extension (e.g., .ts):' })
-                                    .then(fileExtension => {
-                                        if (fileExtension) {
-                                            const totalLines = countLinesInDirectory(rootPath, fileExtension, includeEmptyLines);
-                                            const message = `Total lines of code for \`${fileExtension}\` files: ${totalLines}`;
-                                            vscode.window.showInformationMessage(message);
-                                        } else {
-                                            vscode.window.showErrorMessage('File extension not provided');
-                                        }
-                                    });
-                            } else {
-                                const totalLines = countLinesInDirectory(rootPath, null, includeEmptyLines);
-                                const message = `Total lines of code in the project: ${totalLines}`;
-                                vscode.window.showInformationMessage(message);
-                            }
-                        });
+                    if (selection === 'Specific Extension') {
+                        vscode.window.showInputBox({ prompt: 'Enter file extension (e.g., .ts):' })
+                            .then(fileExtension => {
+                                if (fileExtension) {
+                                    const totalLines = countLinesInDirectory(rootPath, fileExtension);
+                                    vscode.window.showInformationMessage(`Total lines of code for ${fileExtension} files: ${totalLines}`);
+                                } else {
+                                    vscode.window.showErrorMessage('File extension not provided');
+                                }
+                            });
+                    } else {
+                        const totalLines = countLinesInDirectory(rootPath, null);
+                        vscode.window.showInformationMessage(`Total lines of code in the project: ${totalLines}`);
+                    }
                 });
         } else {
             vscode.window.showErrorMessage('No workspace opened');
@@ -78,5 +65,3 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(disposable);
 }
-
-export function deactivate() {}
