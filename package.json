@@ -3,39 +3,53 @@
     "displayName": "Line Counter",
     "description": "A Visual Studio Code extension to count lines of code in your projects.",
     "version": "0.0.3",
-    "icon": "images/line-counter-image.png", 
-    "publisher": "taisssam", 
+    "icon": "images/line-counter-image.png",  
+    "publisher": "taisssam",
     "repository": {
         "type": "git",
-        "url": "https://github.com/taisssam/line_counter.git" 
+        "url": "https://github.com/taisssam/line_counter.git"
     },
     "engines": {
-        "vscode": "^1.65.0"
+      "vscode": "^1.84.0"
     },
     "categories": [
-        "Other"
+      "Other"
     ],
-    "activationEvents": [
-        "onStartup" 
-    ],
-    "main": "./out/extension.js",
+    "activationEvents": [],
+    "main": "./dist/extension.js",
     "contributes": {
-        "commands": [
-            {
-                "command": "extension.countLines",
-                "title": "Count Lines of Code"
-            }
-        ]
+      "commands": [
+        {
+            "command": "extension.countLines",
+            "title": "Count Lines of Code"
+        }
+    ]
     },
     "scripts": {
-        "vscode:prepublish": "npm run compile",
-        "compile": "tsc -p .",
-        "watch": "tsc -watch -p .",
-        "test": "npm run compile && node out/test/runTest.js",
-        "start": "node out/test/runTest.js" 
+      "vscode:prepublish": "npm run package",
+      "compile": "webpack",
+      "watch": "webpack --watch",
+      "package": "webpack --mode production --devtool hidden-source-map",
+      "compile-tests": "tsc -p . --outDir out",
+      "watch-tests": "tsc -p . -w --outDir out",
+      "pretest": "npm run compile-tests && npm run compile && npm run lint",
+      "lint": "eslint src --ext ts",
+      "test": "node ./out/test/runTest.js"
     },
     "devDependencies": {
-        "@types/vscode": "^1.65.0",
-        "typescript": "^4.5.2"
+      "@types/vscode": "^1.84.0",
+      "@types/mocha": "^10.0.2",
+      "@types/node": "18.x",
+      "@typescript-eslint/eslint-plugin": "^6.7.3",
+      "@typescript-eslint/parser": "^6.7.3",
+      "eslint": "^8.50.0",
+      "glob": "^10.3.3",
+      "mocha": "^10.2.0",
+      "typescript": "^5.2.2",
+      "ts-loader": "^9.4.4",
+      "webpack": "^5.88.2",
+      "webpack-cli": "^5.1.4",
+      "@vscode/test-electron": "^2.3.4"
     }
-}
+  }
+  
